@@ -131,7 +131,7 @@ const getAllUserController = (req, res) => {
   }
 };
 
-// update user details
+// update user status controller
 
 const updateUserStatusController = (req, res) => {
   try {
@@ -167,9 +167,84 @@ const updateUserStatusController = (req, res) => {
   }
 };
 
+// update user details controller
+
+const updateUserController = (req, res) => {
+  try {
+    const user = req.body;
+
+    let query = "UPDATE user SET name = ?, email = ? WHERE id = ?";
+    db.query(query, [ user.name, user.email,user.id], (err, result) => {
+      if (err) {
+        res.status(500).json({
+          message: "Something went wrong!",
+          error: err.message,
+        });
+      } else {
+        if (result.affectedRows == 0) {
+          res.status(404).json({
+            message: "User ID does not exist",
+          });
+        } else {
+          res.status(200).json({
+            message: "User details updated successfully!",
+            user: result,
+          });
+        }
+      }
+    });
+  } catch (error) {
+    res.status(200).json({
+      message: "Internal server Error!",
+      error: error.message,
+    });
+  }
+};
+
+// delete user controller
+
+const deleteUserController = (req,res)=>{
+    try {
+
+        const userId = req.params.id;
+
+        const query = "DELETE FROM user WHERE id = ? AND isDeletable = 'true'";
+    
+        db.query(query,[userId],(err,result)=>{
+            if(err){
+                res.status(500).json({
+                    message:"Something went wrong!",
+                    error:err.message
+                })
+            }else{
+                if(result.affectedRows == 0 ){
+                    res.status(404).json({
+                        message:"User ID does not exist!"
+                    })
+                }else{
+                    res.status(201).json({
+                        message:"User deleted successfully!"
+                    })
+
+                }
+            }
+        }) 
+        
+    } catch (error) {
+        res.status(500).json({
+            message:"Internal server Error!",
+            error:error.message
+        })
+    }
+}
+
+
+
 module.exports = {
   registraionController,
   logincontroller,
   getAllUserController,
   updateUserStatusController,
+  updateUserController,
+  deleteUserController
 };
