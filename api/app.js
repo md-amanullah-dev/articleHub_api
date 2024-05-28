@@ -15,6 +15,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const userRoute = require('./routes/userRoute');
 app.use('/api/user',userRoute);
 
+// category route
+const categoryRoute = require('./routes/categoryRoute');
+app.use('/api/category',categoryRoute);
+
 app.use('*',(req,res)=>{
     res.status(400).json({
         message:"OOPS! Page not found!",
