@@ -9,7 +9,11 @@ const app = express();
 
 app.use(express.json());
 app.use(cookiePaser());
-app.use(bodyParser());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// user route
+const userRoute = require('./routes/userRoute');
+app.use('/api/user',userRoute);
 
 app.use('*',(req,res)=>{
     res.status(400).json({
