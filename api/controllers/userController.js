@@ -48,54 +48,128 @@ const registraionController = (req, res) => {
   }
 };
 
-
 const logincontroller = (req, res) => {
-    try {
-      const user = req.body;
-      let query =
-        "SELECT email, password, status, isDeletable FROM user WHERE email = ?";
-      db.query(query, [user.email], (err, result) => {
-        if (err) {
-          res.status(500).json({
-            message: "Something went wrong!",
-            error: err.message,
+  try {
+    const user = req.body;
+    let query =
+      "SELECT email, password, status, isDeletable FROM user WHERE email = ?";
+    db.query(query, [user.email], (err, result) => {
+      if (err) {
+        res.status(500).json({
+          message: "Something went wrong!",
+          error: err.message,
+        });
+      } else {
+        if (result.length <= 0 || result[0].password != user.password) {
+          res.status(401).json({
+            message: "Incorrect Email or Password!",
+          });
+        } else if (result[0].status === "false") {
+          res.status(401).json({
+            message: "Wait for Admin Approval!",
+          });
+        } else if (result[0].password == user.password) {
+          const response = {
+            email: result[0].email,
+            isDeletable: result[0].isDeletable,
+          };
+          const accessToken = JWT.sign(response, process.env.ACCESS_TOKEN, {
+            expiresIn: "8h",
+          });
+          res.status(200).json({
+            message: "user login successfully!",
+            user: result,
+            token: accessToken,
           });
         } else {
-          if (result.length <= 0 || result[0].password != user.password) {
-            res.status(401).json({
-              message: "Incorrect Email or Password!",
-              
-            });
-          } else if (result[0].status === "false") {
-            res.status(401).json({
-              message: "Wait for Admin Approval!",
-            });
-          } else if (result[0].password == user.password) {
-            const response = {
-              email: result[0].email,
-              isDeletable: result[0].isDeletable,
-            };
-            const accessToken = JWT.sign(response, process.env.ACCESS_TOKEN, {
-              expiresIn: "8h",
-            });
-            res.status(200).json({
-              message: "user login successfully!",
-              user: result,
-              token: accessToken,
-            });
-          } else {
-            res.status(400).json({
-              message: " Something went wrong!, Please try again later",
-            });
-          }
+          res.status(400).json({
+            message: " Something went wrong!, Please try again later",
+          });
         }
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: "Internal server Error!",
-        error: error.message,
-      });
-    }
-  };
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server Error!",
+      error: error.message,
+    });
+  }
+};
 
-module.exports = { registraionController, logincontroller };
+// get all user details
+const getAllUserController = (req, res) => {
+  try {
+    const tokenPayload = res.locals;
+
+    let query;
+    if (tokenPayload.isDeletable === "false") {
+      query =
+        "SELECT id,name, email, status FROM user WHERE isDeletable = 'true' ";
+    } else {
+      query =
+        "SELECT id,name, email, status FROM user WHERE isDeletable = 'true' AND email != ?";
+    }
+
+    db.query(query, [tokenPayload.email], (err, result) => {
+      if (err) {
+        res.status(500).json({
+          message: "Something went wrong!",
+          error: err.message,
+        });
+      } else {
+        res.status(201).json({
+          message: "get all user data successfully!",
+          user: result,
+        });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server Error!",
+      error: error.message,
+    });
+  }
+};
+
+// update user details
+
+const updateUserStatusController = (req, res) => {
+  try {
+    const user = req.body;
+
+    let query =
+      "UPDATE user SET status = ? WHERE id = ? AND isDeletable = 'true' ";
+
+    db.query(query, [user.status, user.id], (err, result) => {
+      if (err) {
+        res.status(500).json({
+          message: "Something went wrong!",
+          error: err.message,
+        });
+      } else {
+        if (result.affectedRows == 0) {
+          res.status(404).json({
+            message: "User ID does not exist!",
+          });
+        } else {
+          res.status(200).json({
+            message: "User status Updated successfully!",
+            user: result,
+          });
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server Error!",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  registraionController,
+  logincontroller,
+  getAllUserController,
+  updateUserStatusController,
+};
