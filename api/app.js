@@ -19,6 +19,12 @@ app.use('/api/user',userRoute);
 const categoryRoute = require('./routes/categoryRoute');
 app.use('/api/category',categoryRoute);
 
+// article route
+
+const articleRoute = require('./routes/articleRoute');
+app.use('/api/article',articleRoute);
+
+
 app.use('*',(req,res)=>{
     res.status(400).json({
         message:"OOPS! Page not found!",
